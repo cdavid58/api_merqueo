@@ -37,6 +37,8 @@ def Create_SubCategory(request):
 	except Exception as e:
 		print(e)
 
+	print(data['subcategory'])
+
 	if run:
 		cursor = c.cursor()
 		cursor.execute("""
