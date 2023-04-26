@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.shortcuts import render, redirect
 from .models import Category
 import os.path as path, sqlite3
+from from_number_to_letters import Thousands_Separator
 
 @api_view(['POST'])
 def Create_Category(request):
@@ -118,26 +119,22 @@ def Get_Product(request):
 		cursor.execute("select * from "+str(data['subcategory']))
 		data = []
 		for i in cursor.fetchall():
-			try:
-				price = float(i[2])
-				discount = float(i[3])
-				total_discount = price - (price * (discount / 100))
-				print(total_discount)
-			except Exception as e:
-				total_discount = 0
+			price = float(i[2])
+			discount = float(i[3])
+			print(discount)
+			total_discount = price - (price * (discount / 100))
+			print(total_discount)
 			data.append(
 				{
 					'code': i[0],
 					'product':i[1],
-					'price':i[2],
-					'discount':total_discount,
+					'price': Thousands_Separator(i[2]),
+					'discount':discount,
+					'total_discount': Thousands_Separator(total_discount),
 					'img':i[4]
 				}
 			)
 	return Response(data)
-
-
-
 
 @api_view(['POST'])
 def Get_All_Product(request):
