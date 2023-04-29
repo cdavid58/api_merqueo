@@ -2,7 +2,7 @@ from django.http import HttpResponse, JsonResponse, FileResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import render, redirect
-from .models import Category
+from .models import Category, Subcategory, Product
 import os.path as path, sqlite3
 from from_number_to_letters import Thousands_Separator
 
@@ -17,92 +17,61 @@ def Create_Category(request):
 		Category(
 			name = request.data['name']
 		).save()
-		name_db = str(request.data['name'])+'.db'
-		if not path.isfile(name_db):
-			c = sqlite3.connect(name_db)
-			c.close()
 		result = True
 	return Response({'result':result})
 
-def Connection(name):
-	return sqlite3.connect(name+'.db')
 
 @api_view(['POST'])
 def Create_SubCategory(request):
 	data = request.data
 	run = False
 	try:
-		c = Connection(Category.objects.get(name = data['category']).name)
-		run = True
+		c = Category.objects.get(name = request.data['category'])
+		subc= Subcategory.objects.get(name = data['subcategory'], category = c)
+		run = False
 	except Exception as e:
-		print(e)
-
-	print(data['subcategory'])
+		run = True
 
 	if run:
-		cursor = c.cursor()
-		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS """+str(data['subcategory'])+""" (
-			   	code int not null unique,
-			   	product char(150) not null,
-			   	price decimal(7,1) not null,
-			   	discount int not null,
-			   	img text null
-			);
-		""")
-		c.commit()
-
-	return Response(True)
+		Subcategory(
+			name = data['subcategory'],
+			category = c
+		).save()
+		result = True
+	return Response(result)
 
 @api_view(['POST'])
 def Create_Product(request):
 	data = request.data
-	run = False
-	result = False
-	try:
-		c = Connection(Category.objects.get(name = data['category']).name)
-		run = True
-	except Exception as e:
-		print(e)
-	if run:
-		cursor = c.cursor()
-		query = """
-			insert into """+str(data['subcategory'])+"""
-			(
-				code,product,price,discount
-			)
-			values(?,?,?,?);
-		"""
-		args = (
-			data['code'],str(data['product']),data['price'],data['discount']
-		)
-		cursor.execute(query,args)
-		c.commit()
-		result = True
-
+	Product(
+		code = data['code'],
+		product = data['product'],
+		price = data['price'],
+		discount = data['discount'],
+		img = data['img'],
+		subcategory = Subcategory.objects.get(name = data['subcategory'])
+	).save()
+	result = True
 	return Response({'result':result})
 
 
 @api_view(['POST'])
 def Get_Category(request):
 	category = Category.objects.all()
-	data = []
-	list_sub = []
-	for _category in category:
-		c = Connection(_category.name)
-		cursor = c.cursor()
-		cursor.execute("SELECT * FROM sqlite_master WHERE type = 'table'")
-		n = 0
-		_data = cursor.fetchall()
-		list_sub.append(_data[0][1])
+	data = {}
 	n = 0
-	for i in category:
-		data.append({
-			"category":i.name,
-			"subcategory": list_sub[n],
-			"url_menu": str(list_sub[n]).replace(' ','_')
-		})
-		n += 1
+	list_c = []
+	for _category in category:
+		value = []
+		list_c.append({'name':_category.name})
+		for i in Subcategory.objects.filter(category = _category):
+			value.append({
+				"name":i.name,
+				"category":_category.name
+				})
+		data[int(n)] = value
+		n+=1
+	data['category'] = list_c
 	return Response(data)
 
 
@@ -110,72 +79,69 @@ def Get_Category(request):
 def Get_Product(request):
 	run = False
 	data = request.data
-	try:
-		c = Connection(Category.objects.get(name = data['category']).name)
-		run = True
-	except Exception as e:
-		print(e)
-
-	if run:
-		cursor = c.cursor()
-		cursor.execute("select * from "+str(data['subcategory']))
-		data = []
-		for i in cursor.fetchall():
-			price = float(i[2])
-			discount = float(i[3])
-			print(discount)
-			total_discount = price - (price * (discount / 100))
-			print(total_discount)
-			data.append(
-				{
-					'code': i[0],
-					'product':i[1],
-					'price': Thousands_Separator(i[2]),
-					'discount':discount,
-					'total_discount': Thousands_Separator(total_discount),
-					'img':i[4]
-				}
-			)
-	return Response(data)
+	subcategory = Subcategory.objects.filter(name = data['subcategory'])
+	_data = []
+	for i in subcategory:
+		for j in Product.objects.filter(subcategory = i):
+			_data.append({
+				'pk':j.pk,
+				'code':j.code,
+				"product":j.product,
+				"price":Thousands_Separator(int(j.price)),
+				"discount":int(j.discount),
+				"img":"http://localhost:9090"+j.img.url,
+				"Total_Discount": Thousands_Separator(int(j.Total_Discount()))
+			})
+	return Response(_data)
 
 @api_view(['POST'])
 def Get_All_Product(request):
 	run = False
-	data = request.data
 	category = Category.objects.all()
 	list_product = []
-	for j in category:
-		try:
-			c = Connection(j.name)
-			run = True
-		except Exception as e:
-			print(e)
-		cursor = c.cursor()
-		cursor.execute("SELECT * FROM sqlite_master WHERE type = 'table'")
-		n = 0
-		_data = cursor.fetchall()
-		print(_data[0][1])
-		cursor = c.cursor()
-		for x in _data:
-			cursor.execute("select * from "+str(x[1])+" limit 10")
-			list_product.append([
-				{
-					'code': i[0],
-					'product':i[1],
-					'price':i[2],
-					'discount':i[3],
-					'category':j.name,
-					'subcategory':_data[0][1]
-				}
-				for i in cursor.fetchall()
-			]
-		)
-				
-	return Response(list_product)
+	data = {}
+	list_subcategory = []
+	n = 0
+	value = []
+	exist = False
+	for x in category:
+		list_subcategory.append({'name':x.name})
+		for i in Subcategory.objects.filter(category = x):
+			for j in Product.objects.filter(subcategory = i)[:5]:
+				if j:
+					value.append({
+						"code": j.code,
+						"product": j.product,
+						"price":j.price,
+						"category":j.subcategory.category.name,
+						'subcategory':j.subcategory.name,
+						"img":"http://localhost:9090"+j.img.url
+					})
+					exist = True
+					print(i)
+				else:
+					exist = False
+					print('No existo')
+
+	data['products'] = value
+	data['category'] = list_subcategory
+	return Response(data)
 
 
 
-
+@api_view(['POST'])
+def Get_Product_Only(request):
+	try:
+		p = Product.objects.get(code = request.data['code'])
+		return Response({
+			"code":p.code,
+			"product":p.product,
+			"discount":p.discount,
+			"price":p.price,
+			"img":"http://localhost:9090"+p.img.url,
+		})
+	except Product.DoesNotExist as e:
+		return Response({'result':str(e)})
 
 
 

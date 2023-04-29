@@ -31,17 +31,18 @@ def Login(request):
 	data = request.data
 	message = "Usuario o contraseña incorrecta"
 	result = False
+	_data = {}
 	try:
-		user = User.objects.get(email = data['email'], psswd = data['psswd'])
-		data = {
-			"name": user.name,
-			"email" : user.email,
-			"phone" : user.phone,
-			"psswd" : user.psswd
-		}
-		result = True
-		message = "success"
+		user = User.objects.get(email = data['email'])
+		if user.verified:
+			_data = {
+				"name": user.name,
+				"email" : user.email,
+				"phone" : user.phone,
+				"psswd" : user.psswd
+			}
+			result = True
+			message = "success"
 	except Exception as e:
 		message = str(e)
-
-	return Response({ 'result':result, 'message':message,'data':data })
+	return Response({'result':result, 'message':message,'data': _data})

@@ -10,3 +10,9 @@ class User(models.Model):
 
 	def __str__(self):
 		return self.name
+
+
+class Shipping_Address(models.Model):
+	address = models.CharField(max_length = 250)
+	phone = models.CharField(max_length = 15)
+	

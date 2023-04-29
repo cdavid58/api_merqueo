@@ -8,4 +8,5 @@ urlpatterns=[
 	url(r'^Get_Category/$',Get_Category,name="Get_Category"),
 	url(r'^Get_Product/$',Get_Product,name="Get_Product"),
 	url(r'^Get_All_Product/$',Get_All_Product,name="Get_All_Product"),
+	url(r'^Get_Product_Only/$',Get_Product_Only,name="Get_Product_Only"),
 ]
