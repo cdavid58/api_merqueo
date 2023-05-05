@@ -17,7 +17,7 @@ def Create_Order(request):
 			n = 1
 	except Order.DoesNotExist:
 		order = None
-	
+
 	for i in range(len(data)):
 		Order(
 			consecutive = 1 if order is None else n,
@@ -30,6 +30,36 @@ def Create_Order(request):
 		).save()
 
 	return Response({'consecutive':n})
+
+@api_view(['POST'])
+def Download_Order(requests):
+    return Response([
+        {
+            "numero": i.consecutive,
+            "codigo":i.code,
+            "producto":i.product,
+            "cantidad":i.quanty,
+            "precio":i.price,
+            "descuento":i.discount,
+            "total":i.Total_Order(),
+            "nombre":i.user.name,
+            "telefono":i.user.phone,
+            "email":i.user.email
+        }
+        for i in Order.objects.filter(download = False)
+    ])
+
+@api_view(['POST'])
+def Update_State(request):
+    data = request.data
+    try:
+        o = Order.objects.filter(consecutive = data['number'],user = User.objects.get(email = data['email']))
+        for i in o:
+            i.download = True
+            i.save()
+    except Exception:
+        pass
+    return Response(True)
 
 
 

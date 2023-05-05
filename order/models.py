@@ -10,9 +10,10 @@ class Order(models.Model):
 	price = models.IntegerField()
 	discount = models.IntegerField()
 	date = models.DateField(auto_now_add= True)
+	download = models.BooleanField(default = False)
 
+	def Total_Order(self):
+	    return self.price * self.quanty
 
 	def __str__(self):
 		return str(self.consecutive)+' '+str(self.user.name)
-
-

@@ -26,7 +26,7 @@ def Create_SubCategory(request):
 	data = request.data
 	run = False
 	try:
-		c = Category.objects.get(name = request.data['category'])
+		c = Category.objects.get(name = request.data['category'], active = True)
 		subc= Subcategory.objects.get(name = data['subcategory'], category = c)
 		run = False
 	except Exception as e:
@@ -57,7 +57,7 @@ def Create_Product(request):
 
 @api_view(['POST'])
 def Get_Category(request):
-	category = Category.objects.all()
+	category = Category.objects.filter(active = True)
 	data = {}
 	n = 0
 	list_c = []
@@ -89,7 +89,7 @@ def Get_Product(request):
 				"product":j.product,
 				"price":Thousands_Separator(int(j.price)),
 				"discount":int(j.discount),
-				"img":"http://localhost:9090"+j.img.url,
+				"img":"https://apirapimercado.pythonanywhere.com"+j.img.url,
 				"Total_Discount": Thousands_Separator(int(j.Total_Discount()))
 			})
 	return Response(_data)
@@ -97,7 +97,7 @@ def Get_Product(request):
 @api_view(['POST'])
 def Get_All_Product(request):
 	run = False
-	category = Category.objects.all()
+	category = Category.objects.filter(active = True)
 	list_product = []
 	data = {}
 	list_subcategory = []
@@ -115,7 +115,7 @@ def Get_All_Product(request):
 						"price":j.price,
 						"category":j.subcategory.category.name,
 						'subcategory':j.subcategory.name,
-						"img":"http://localhost:9090"+j.img.url
+						"img":"https://apirapimercado.pythonanywhere.com"+j.img.url
 					})
 					exist = True
 					print(i)
@@ -138,7 +138,7 @@ def Get_Product_Only(request):
 			"product":p.product,
 			"discount":p.discount,
 			"price":p.price,
-			"img":"http://localhost:9090"+p.img.url,
+			"img":"https://apirapimercado.pythonanywhere.com"+p.img.url,
 		})
 	except Product.DoesNotExist as e:
 		return Response({'result':str(e)})

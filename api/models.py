@@ -1,7 +1,9 @@
 from django.db import models
+import os, binascii
 
 class Category(models.Model):
 	name = models.CharField(max_length= 80)
+	active = models.BooleanField(default = True)
 
 	def __str__(self):
 		return self.name
@@ -14,7 +16,7 @@ class Subcategory(models.Model):
 		return self.name
 
 class Product(models.Model):
-	code = models.CharField(max_length = 11,unique=True)
+	code = models.CharField(max_length = 20,unique=True,default = str(binascii.b2a_hex(os.urandom(7)))[2:-1])
 	product = models.CharField(max_length = 150)
 	price = models.FloatField()
 	discount = models.FloatField()

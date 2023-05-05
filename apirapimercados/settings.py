@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-t7z(rjpdmi!6w__2s832m@j70aiwl@*e9oz0!2(6-3ql#q0$#m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,7 +42,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS  = [
-    'http://localhost:8000',
+    'https://rapimercado.pythonanywhere.com',
 ]
 
 
